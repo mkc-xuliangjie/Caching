@@ -13,8 +13,14 @@ namespace Microsoft.Framework.DependencyInjection
         public static IServiceCollection AddSqlServerCache([NotNull] this IServiceCollection services)
         {
             services.AddOptions();
-            services.AddSingleton<IDistributedCache, SqlServerCache>();
+            AddSqlServerCacheServices(services);
             return services;
+        }
+
+        // to enable unit testing
+        internal static void AddSqlServerCacheServices(IServiceCollection services)
+        {
+            services.TryAdd(ServiceDescriptor.Singleton<IDistributedCache, SqlServerCache>());
         }
 
         public static void ConfigureSqlServerCache(
