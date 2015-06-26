@@ -6,24 +6,35 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using Microsoft.Framework.Caching.Distributed;
+using Microsoft.Framework.Internal;
 
 namespace Microsoft.Framework.Caching.SqlServer
 {
     internal class DatabaseOperations : IDatabaseOperations
     {
-        public DatabaseOperations(SqlServerCacheOptions options)
+        public DatabaseOperations(
+            string connectionString, string schemaName, string tableName, ISystemClock systemClock)
         {
-            Options = options;
-            SqlQueries = new SqlQueries(options.SchemaName, options.TableName);
+            ConnectionString = connectionString;
+            SchemaName = schemaName;
+            TableName = tableName;
+            SystemClock = systemClock;
+            SqlQueries = new SqlQueries(schemaName, tableName);
         }
 
         protected SqlQueries SqlQueries { get; }
 
-        protected SqlServerCacheOptions Options { get; }
+        protected string ConnectionString { get; }
+
+        protected string SchemaName { get; }
+
+        protected string TableName { get; }
+
+        protected ISystemClock SystemClock { get; }
 
         public void DeleteCacheItem(string key)
         {
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.DeleteCacheItem, connection);
                 command.Parameters.AddCacheItemId(key);
@@ -36,7 +47,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public async Task DeleteCacheItemAsync(string key)
         {
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.DeleteCacheItem, connection);
                 command.Parameters.AddCacheItemId(key);
@@ -70,7 +81,7 @@ namespace Microsoft.Framework.Caching.SqlServer
         public virtual void GetTableSchema()
         {
             // Try connecting to the database and check if its available.
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.TableInfo, connection);
                 connection.Open();
@@ -79,16 +90,16 @@ namespace Microsoft.Framework.Caching.SqlServer
                 if (!reader.Read())
                 {
                     throw new InvalidOperationException(
-                        $"Could not retrieve information of table with schema '{Options.SchemaName}' and " +
-                        $"name '{Options.TableName}'. Make sure you have the table setup and try again. " +
-                        $"Connection string: {Options.ConnectionString}");
+                        $"Could not retrieve information of table with schema '{SchemaName}' and " +
+                        $"name '{TableName}'. Make sure you have the table setup and try again. " +
+                        $"Connection string: {ConnectionString}");
                 }
             }
         }
 
         public virtual async Task GetTableSchemaAsync()
         {
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.TableInfo, connection);
                 await connection.OpenAsync();
@@ -98,18 +109,18 @@ namespace Microsoft.Framework.Caching.SqlServer
                 if (!await reader.ReadAsync())
                 {
                     throw new InvalidOperationException(
-                        $"Could not retrieve information of table with schema '{Options.SchemaName}' and " +
-                        $"name '{Options.TableName}'. Make sure you have the table setup and try again. " +
-                        $"Connection string: {Options.ConnectionString}");
+                        $"Could not retrieve information of table with schema '{SchemaName}' and " +
+                        $"name '{TableName}'. Make sure you have the table setup and try again. " +
+                        $"Connection string: {ConnectionString}");
                 }
             }
         }
 
         public void DeleteExpiredCacheItems()
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.DeleteExpiredCacheItems, connection);
                 command.Parameters.AddWithValue("UtcNow", SqlDbType.DateTime, utcNowDateTime);
@@ -122,11 +133,11 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public virtual void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             var expirationInfo = CacheItemExpiration.GetExpirationInfo(utcNowDateTime, options);
 
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var upsertCommand = new SqlCommand(SqlQueries.SetCacheItem, connection);
                 upsertCommand.Parameters
@@ -152,11 +163,11 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public virtual async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             var expirationInfo = CacheItemExpiration.GetExpirationInfo(utcNowDateTime, options);
 
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var upsertCommand = new SqlCommand(SqlQueries.SetCacheItem, connection);
                 upsertCommand.Parameters
@@ -182,7 +193,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         protected virtual byte[] GetCacheItem(string key, bool includeValue)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             string query;
             if (includeValue)
@@ -198,7 +209,7 @@ namespace Microsoft.Framework.Caching.SqlServer
             TimeSpan? slidingExpiration = null;
             DateTime? absoluteExpirationUTC = null;
             DateTime expirationTimeUTC;
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(query, connection);
                 command.Parameters
@@ -247,7 +258,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         protected virtual async Task<byte[]> GetCacheItemAsync(string key, bool includeValue)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             string query;
             if (includeValue)
@@ -263,7 +274,7 @@ namespace Microsoft.Framework.Caching.SqlServer
             TimeSpan? slidingExpiration = null;
             DateTime? absoluteExpirationUTC = null;
             DateTime expirationTimeUTC;
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(query, connection);
                 command.Parameters
@@ -323,7 +334,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
             if (newExpirationTimeUTC.HasValue)
             {
-                using (var connection = new SqlConnection(Options.ConnectionString))
+                using (var connection = new SqlConnection(ConnectionString))
                 {
                     connection.Open();
 
@@ -349,7 +360,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
             if (newExpirationTimeUTC.HasValue)
             {
-                using (var connection = new SqlConnection(Options.ConnectionString))
+                using (var connection = new SqlConnection(ConnectionString))
                 {
                     var command = new SqlCommand(SqlQueries.UpdateCacheItemExpiration, connection);
                     command.Parameters

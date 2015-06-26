@@ -5,19 +5,21 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using Microsoft.Framework.Internal;
 
 namespace Microsoft.Framework.Caching.SqlServer
 {
     internal class MonoDatabaseOperations : DatabaseOperations
     {
-        public MonoDatabaseOperations(SqlServerCacheOptions options)
-            : base(options)
+        public MonoDatabaseOperations(
+            string connectionString, string schemaName, string tableName, ISystemClock systemClock)
+            : base(connectionString, schemaName, tableName, systemClock)
         {
         }
 
         protected override byte[] GetCacheItem(string key, bool includeValue)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             string query;
             if (includeValue)
@@ -33,7 +35,7 @@ namespace Microsoft.Framework.Caching.SqlServer
             TimeSpan? slidingExpiration = null;
             DateTime? absoluteExpirationUTC = null;
             DateTime expirationTimeUTC;
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(query, connection);
                 command.Parameters
@@ -81,7 +83,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         protected override async Task<byte[]> GetCacheItemAsync(string key, bool includeValue)
         {
-            var utcNowDateTime = Options.SystemClock.UtcNow.UtcDateTime;
+            var utcNowDateTime = SystemClock.UtcNow.UtcDateTime;
 
             string query;
             if (includeValue)
@@ -97,7 +99,7 @@ namespace Microsoft.Framework.Caching.SqlServer
             TimeSpan? slidingExpiration = null;
             DateTime? absoluteExpirationUTC = null;
             DateTime expirationTimeUTC;
-            using (var connection = new SqlConnection(Options.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 var command = new SqlCommand(SqlQueries.GetCacheItem, connection);
                 command.Parameters

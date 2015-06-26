@@ -8,18 +8,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Framework.Caching.Distributed;
 using Microsoft.Framework.Configuration;
-using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
-using Microsoft.Framework.Logging;
 using Microsoft.Framework.OptionsModel;
-using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.Caching.SqlServer
 {
     // This requires SQL Server database to be setup
     // public
-    public class SqlServerCacheTest
+    public class SqlServerCacheWithDatabaseTest
     {
         private const string ConnectionStringKey = "ConnectionString";
         private const string SchemaNameKey = "SchemaName";
@@ -29,7 +26,7 @@ namespace Microsoft.Framework.Caching.SqlServer
         private readonly string _schemaName;
         private readonly string _connectionString;
 
-        public SqlServerCacheTest()
+        public SqlServerCacheWithDatabaseTest()
         {
             // TODO: Figure how to use config.json which requires resolving IApplicationEnvironment which currently
             // fails.
@@ -49,24 +46,6 @@ namespace Microsoft.Framework.Caching.SqlServer
             _tableName = configuration.Get(TableNameKey);
             _schemaName = configuration.Get(SchemaNameKey);
             _connectionString = configuration.Get(ConnectionStringKey);
-        }
-
-        [Fact]
-        public void AddSqlServerCache_AddsAsSingleRegistrationService()
-        {
-            // Arrange
-            var services = new ServiceCollection();
-
-            // Act
-            SqlServerCacheExtensions.AddSqlServerCacheServices(services);
-            SqlServerCacheExtensions.AddSqlServerCacheServices(services);
-
-            // Assert
-            Assert.Equal(1, services.Count);
-            var serviceDescriptor = services[0];
-            Assert.Equal(typeof(IDistributedCache), serviceDescriptor.ServiceType);
-            Assert.Equal(typeof(SqlServerCache), serviceDescriptor.ImplementationType);
-            Assert.Equal(ServiceLifetime.Singleton, serviceDescriptor.Lifetime);
         }
 
         [Fact]
@@ -458,7 +437,6 @@ namespace Microsoft.Framework.Caching.SqlServer
         public async Task DeletesCacheItem_OnExplicitlyCalled()
         {
             // Arrange
-            var testClock = new TestClock();
             var key = Guid.NewGuid().ToString();
             var sqlServerCache = await GetCacheAndConnectAsync();
             await sqlServerCache.SetAsync(

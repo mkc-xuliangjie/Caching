@@ -22,7 +22,7 @@ namespace Microsoft.Framework.Caching.SqlServer
         public const int ExpirationTimeMultiplier = 2;
 
         public static CacheItemExpirationInfo GetExpirationInfo(
-            DateTime utcNow,
+            DateTime utcNowDateTime,
             DistributedCacheEntryOptions options)
         {
             var result = new CacheItemExpirationInfo();
@@ -32,12 +32,12 @@ namespace Microsoft.Framework.Caching.SqlServer
             DateTime? absoluteExpiration = null;
             if (options.AbsoluteExpirationRelativeToNow.HasValue)
             {
-                absoluteExpiration = utcNow.Add(options.AbsoluteExpirationRelativeToNow.Value);
+                absoluteExpiration = utcNowDateTime.Add(options.AbsoluteExpirationRelativeToNow.Value);
             }
             else if (options.AbsoluteExpiration.HasValue)
             {
                 var absoluteExpirationInUTCDateTime = options.AbsoluteExpiration.Value.UtcDateTime;
-                if (absoluteExpirationInUTCDateTime <= utcNow)
+                if (absoluteExpirationInUTCDateTime <= utcNowDateTime)
                 {
                     throw new InvalidOperationException("The absolute expiration value must be in the future.");
                 }
@@ -47,7 +47,7 @@ namespace Microsoft.Framework.Caching.SqlServer
             result.AbsoluteExpirationUTC = absoluteExpiration;
 
             result.ExpiresAtTimeUTC = GetExpirationTimeUTC(
-                result.SlidingExpiration, result.AbsoluteExpirationUTC, utcNow);
+                result.SlidingExpiration, result.AbsoluteExpirationUTC, utcNowDateTime);
 
             return result;
         }
