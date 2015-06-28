@@ -15,7 +15,9 @@ namespace Microsoft.Framework.Caching.SqlServer
     /// </summary>
     public class SqlServerCache : IDistributedCache
     {
-        private readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromHours(1);
+        private static readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
+
         private readonly IDatabaseOperations _dbOperations;
         private readonly ISystemClock _systemCock;
         private readonly TimeSpan _expiredItemsDeletionInterval;
@@ -40,7 +42,8 @@ namespace Microsoft.Framework.Caching.SqlServer
                 throw new ArgumentException(
                     $"{nameof(SqlServerCacheOptions.TableName)} cannot be empty or null.");
             }
-            if (cacheOptions.ExpiredItemsDeletionInterval < MinimumExpiredItemsDeletionInterval)
+            if (cacheOptions.ExpiredItemsDeletionInterval.HasValue &&
+                cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
             {
                 throw new ArgumentException(
                     $"{nameof(SqlServerCacheOptions.ExpiredItemsDeletionInterval)} cannot be less the minimum " +
@@ -48,7 +51,8 @@ namespace Microsoft.Framework.Caching.SqlServer
             }
 
             _systemCock = cacheOptions.SystemClock ?? new SystemClock();
-            _expiredItemsDeletionInterval = cacheOptions.ExpiredItemsDeletionInterval;
+            _expiredItemsDeletionInterval =
+                cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
 
             // SqlClient library on Mono doesn't have support for DateTimeOffset and also
             // it doesn't have support for apis like GetFieldValue, GetFieldValueAsync etc.

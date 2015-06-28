@@ -39,7 +39,8 @@ namespace Microsoft.Framework.Caching.SqlServer
             "END " +
             "ELSE " +
             "BEGIN " +
-                "UPDATE {0} SET Value = @Value, ExpiresAtTimeUTC = @ExpiresAtTimeUTC " +
+                "UPDATE {0} SET Value = @Value, ExpiresAtTimeUTC = @ExpiresAtTimeUTC, " +
+                "SlidingExpirationInTicks = @SlidingExpirationInTicks, AbsoluteExpirationUTC=@AbsoluteExpirationUTC " +
                 "WHERE Id = @Id " +
             "END ";
 
