@@ -19,14 +19,6 @@ namespace Microsoft.Framework.Internal
 
         public DateTimeOffset UtcNow { get; private set; }
 
-        public DateTime UtcDateTime
-        {
-            get
-            {
-                return UtcNow.UtcDateTime;
-            }
-        }
-
         public TestClock Add(TimeSpan timeSpan)
         {
             UtcNow = UtcNow.Add(timeSpan);

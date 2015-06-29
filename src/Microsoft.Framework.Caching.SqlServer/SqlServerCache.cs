@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Caching.SqlServer
         private readonly IDatabaseOperations _dbOperations;
         private readonly ISystemClock _systemCock;
         private readonly TimeSpan _expiredItemsDeletionInterval;
-        private DateTime _lastExpirationScanUTC;
+        private DateTimeOffset _lastExpirationScan;
 
         public SqlServerCache(IOptions<SqlServerCacheOptions> options)
         {
@@ -154,10 +154,10 @@ namespace Microsoft.Framework.Caching.SqlServer
         // If sufficient time has elapsed then a scan is initiated on a background task.
         private void ScanForExpiredItemsIfRequired()
         {
-            var utcNow = _systemCock.UtcNow.UtcDateTime;
-            if ((utcNow - _lastExpirationScanUTC) > _expiredItemsDeletionInterval)
+            var utcNow = _systemCock.UtcNow;
+            if ((utcNow - _lastExpirationScan) > _expiredItemsDeletionInterval)
             {
-                _lastExpirationScanUTC = utcNow;
+                _lastExpirationScan = utcNow;
                 ThreadPool.QueueUserWorkItem(DeleteExpiredCacheItems, state: null);
             }
         }

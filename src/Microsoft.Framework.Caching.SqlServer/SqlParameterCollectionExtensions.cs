@@ -37,9 +37,9 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public static SqlParameterCollection AddExpiresAtTime(
             this SqlParameterCollection parameters,
-            DateTime utcTime)
+            DateTimeOffset utcTime)
         {
-            return parameters.AddWithValue(Columns.Names.ExpiresAtTimeUTC, SqlDbType.DateTime, utcTime);
+            return parameters.AddWithValue(Columns.Names.ExpiresAtTime, SqlDbType.DateTimeOffset, utcTime);
         }
 
         public static SqlParameterCollection AddSlidingExpirationInTicks(
@@ -59,16 +59,17 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public static SqlParameterCollection AddAbsoluteExpiration(
             this SqlParameterCollection parameters,
-            DateTime? utcTime)
+            DateTimeOffset? utcTime)
         {
             if (utcTime.HasValue)
             {
                 return parameters.AddWithValue(
-                    Columns.Names.AbsoluteExpirationUTC, SqlDbType.DateTime, utcTime.Value);
+                    Columns.Names.AbsoluteExpiration, SqlDbType.DateTimeOffset, utcTime.Value);
             }
             else
             {
-                return parameters.AddWithValue(Columns.Names.AbsoluteExpirationUTC, SqlDbType.DateTime, DBNull.Value);
+                return parameters.AddWithValue(
+                    Columns.Names.AbsoluteExpiration, SqlDbType.DateTimeOffset, DBNull.Value);
             }
         }
 
