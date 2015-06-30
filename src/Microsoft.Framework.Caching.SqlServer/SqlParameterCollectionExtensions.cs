@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Caching.SqlServer
 
         public static SqlParameterCollection AddCacheItemId(this SqlParameterCollection parameters, string value)
         {
-            return parameters.AddWithValue(Columns.Names.CacheItemId, SqlDbType.NVarChar, 100, value);
+            return parameters.AddWithValue(Columns.Names.CacheItemId, SqlDbType.NVarChar, 900, value);
         }
 
         public static SqlParameterCollection AddCacheItemValue(this SqlParameterCollection parameters, byte[] value)
