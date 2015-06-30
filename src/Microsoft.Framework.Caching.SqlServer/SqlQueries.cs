@@ -7,11 +7,12 @@ namespace Microsoft.Framework.Caching.SqlServer
     {
         private const string CreateTableFormat = "CREATE TABLE {0}(" +
             // add collation to the key column to make it case-sensitive
-            "Id nvarchar(900) COLLATE SQL_Latin1_General_CP1_CS_AS NOT NULL PRIMARY KEY, " +
+            "Id nvarchar(900) COLLATE SQL_Latin1_General_CP1_CS_AS NOT NULL, " +
             "Value varbinary(MAX) NOT NULL, " +
             "ExpiresAtTime datetimeoffset NOT NULL, " +
             "SlidingExpirationInTicks bigint NULL," +
-            "AbsoluteExpiration datetimeoffset NULL)";
+            "AbsoluteExpiration datetimeoffset NULL, " +
+            "CONSTRAINT pk_Id PRIMARY KEY (Id))";
 
         private const string CreateNonClusteredIndexOnExpirationTimeFormat
             = "CREATE NONCLUSTERED INDEX Index_ExpiresAtTime ON {0}(ExpiresAtTime)";
